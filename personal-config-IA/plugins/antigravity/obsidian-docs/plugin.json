@@ -1,0 +1,5 @@
+{
+  "$schema": "https://antigravity.google/schemas/v1/plugin.json",
+  "name": "obsidian-docs",
+  "description": "Documenta cualquier proyecto (software, datos, procesos, negocio) en un Vault de Obsidian: estructura PARA/Diátaxis, diagramas Mermaid y Canvas, callouts, plantillas, glosario y ejemplos aterrizados para lectores técnicos y no técnicos. Incluye requerimientos e historias de usuario con tablero de avance y cronograma, y gestión de git con commits claros por proyecto."
+}
