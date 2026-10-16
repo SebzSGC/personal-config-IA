@@ -95,7 +95,7 @@ python3 scripts/git_vault.py estado "<repo>" --fetch
    git push
    ```
    Si el push es rechazado (`fetch first` / `non-fast-forward`): repetir `git pull --rebase` + `git push`. Nunca forzar.
-7. **Informar**: lista de commits (`git log --oneline -n <N>`), confirmación de que quedaron en el remoto (`⬆️ 0 commits sin subir`), y sugiere regenerar el dashboard (`generar-dashboard.bat`).
+7. **Informar**: lista de commits (`git log --oneline -n <N>`), confirmación de que quedaron en el remoto (`⬆️ 0 commits sin subir`), y genera el dashboard con el skill `dashboard-documentacion` si el usuario lo usa (o ofrécelo en una línea).
 
 ## Ramas: ¿directo a main o rama + PR?
 
