@@ -246,7 +246,7 @@ def cmd_preparar(a):
     if a.remoto:
         if git_ok(raiz, "remote", "get-url", "origin") is None:
             git(raiz, "remote", "add", "origin", a.remoto)
-            acciones.append(f"Remoto origin = {a.remoto}")
+            acciones.append("Remoto origin = " + re.sub(r"//[^@/]+@", "//", a.remoto))
         else:
             acciones.append("Ya existe un remoto 'origin' (no se modificó)")
 
@@ -501,6 +501,8 @@ def cmd_estado(a):
     hay_head = git_ok(raiz, "rev-parse", "--verify", "-q", "HEAD") is not None
     rama = (git_ok(raiz, "rev-parse", "--abbrev-ref", "HEAD") or "").strip() or "main"
     remoto = (git_ok(raiz, "remote", "get-url", "origin") or "").strip() or None
+    if remoto:
+        remoto = re.sub(r"//[^@/]+@", "//", remoto)  # nunca mostrar usuario:token de la URL
     if a.fetch and remoto:
         git_ok(raiz, "fetch", "--quiet", "origin")
     upstream = (git_ok(raiz, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}") or "").strip() or None
