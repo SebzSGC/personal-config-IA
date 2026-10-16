@@ -100,6 +100,6 @@ Solo configuración. **Nunca**: sesiones ni credenciales (`~/.claude.json`, `.cr
 |---|---|
 | «La ejecución de scripts está deshabilitada» | Usa `instalar.cmd` (ya pasa `-ExecutionPolicy Bypass`) |
 | Un skill no aparece | Reinicia Claude / Antigravity. Revisa que la carpeta tenga `SKILL.md` con `name` y `description` |
-| Un plugin nuevo no aparece | Ejecuta otra vez `instalar` (los plugins se enlazan uno por uno) |
+| Un plugin nuevo no aparece | Ejecuta otra vez `instalar`, recarga Antigravity (`Developer: Reload Window`) e inicia una **nueva conversación**. |
 | `sincronizar` dice que no pudo hacer pull | Tienes cambios sin subir: `git status`, haz commit y vuelve a intentarlo |
 | Moví el repo de carpeta | Ejecuta `instalar` desde la nueva ubicación: reemplaza los enlaces viejos |
