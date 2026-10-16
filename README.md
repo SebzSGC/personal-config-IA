@@ -11,6 +11,9 @@ personal-config-IA/
 ├── plugins/
 │   └── antigravity/
 │       └── obsidian-docs/       → ~/.gemini/config/plugins/obsidian-docs
+├── herramientas/
+│   └── vault-dashboard/         ← código fuente de la interfaz del dashboard (React); no se instala
+├── generar-dashboard.cmd / .sh      ← dashboard de la documentación con doble clic
 ├── instalar.cmd / instalar.ps1      ← Windows
 ├── sincronizar.cmd / sincronizar.ps1
 ├── instalar.sh / sincronizar.sh     ← macOS / Linux
@@ -59,6 +62,7 @@ macOS / Linux: `./instalar.sh` (y `./instalar.sh --simular`).
 | Quiero… | Hago |
 |---|---|
 | Traer lo último a este equipo | `sincronizar.cmd` (hace `git pull` y reenlaza) |
+| Ver el estado de toda la documentación | Doble clic en `generar-dashboard.cmd` (la primera vez pide la ruta del repo de documentación) |
 | Guardar un cambio | `git add -A` → `git commit -m "feat(skills): agrega skill de informes"` → `git push` |
 | Agregar un skill | Crea `skills/<nombre>/SKILL.md` (o créalo desde Claude/Antigravity) y haz commit |
 | Agregar un agente | Archivo `.md` en `agents/claude/` o `agents/antigravity/` |
@@ -87,7 +91,9 @@ python plugins\antigravity\obsidian-docs\skills\git-documentacion\scripts\git_va
 
 | Elemento | Para qué | Funciona en |
 |---|---|---|
-| `plugins/antigravity/obsidian-docs` | Documentar proyectos en Obsidian, requerimientos e historias de usuario, git con commits claros | Antigravity |
+| `plugins/antigravity/obsidian-docs` | Documentar proyectos en Obsidian y mantenerlos al día (orquestador + regla siempre activa), requerimientos e historias de usuario, git con commits claros, dashboard | Antigravity |
+| `herramientas/vault-dashboard` | Código fuente de la interfaz del dashboard. Solo para cambiarla: `npm run publicar` actualiza la plantilla del plugin | Desarrollo (Node 18+) |
+| `generar-dashboard.cmd` / `.sh` | Genera y abre el dashboard HTML (Python, sin Node) | Windows / macOS / Linux |
 | `agents/claude/revisor-documentacion.md` | Revisor independiente de la documentación del vault | Claude |
 
 ## 🔐 Qué NO va en este repo
