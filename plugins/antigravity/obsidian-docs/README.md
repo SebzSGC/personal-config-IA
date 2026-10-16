@@ -51,6 +51,7 @@ agy plugin list
 ```
 
 Reinicia Antigravity y verifica en **Customizations** que aparezcan los 5 skills, las 2 reglas y el agente.
+El agente `revisor-documentacion` aparece en el selector de agentes porque tiene `mainAgent: true`; también lo puede invocar el agente principal como subagente (`subagent: true`).
 
 > Requisitos: **Python 3.8+** (validador y ayudante de git) y **Git**.
 
