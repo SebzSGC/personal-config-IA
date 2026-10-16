@@ -133,7 +133,6 @@ if [ "$DESINSTALAR" = 1 ]; then
   for par in "${CARPETAS[@]}"; do desenlazar "${par%%|*}" "${par##*|}"; done
   for p in "$PLUGINS_REPO"/*/; do [ -d "$p" ] && desenlazar "$PLUGINS_DESTINO/$(basename "$p")" "${p%/}"; done
   quitar_json "$CASA/.gemini/config/plugins.json" "$PLUGINS_REPO"
-  for p in "$PLUGINS_REPO"/*/; do [ -d "$p/skills" ] && quitar_json "$CASA/.gemini/config/skills.json" "${p}skills"; done
   echo; echo "Listo."; exit 0
 fi
 
@@ -148,9 +147,6 @@ for p in "$PLUGINS_REPO"/*/; do
 done
 if [ "$hay" = 1 ]; then
   registrar_json "$CASA/.gemini/config/plugins.json" "$PLUGINS_REPO"
-  for p in "$PLUGINS_REPO"/*/; do
-    [ -d "$p/skills" ] && registrar_json "$CASA/.gemini/config/skills.json" "${p}skills"
-  done
 else
   echo "   (no hay plugins en el repo)"
 fi

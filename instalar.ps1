@@ -154,7 +154,9 @@ function Actualizar-JsonConfig([string]$archivoJson, [string]$rutaAgregar) {
   Hacer "registrar $rutaNormalizada en $(Split-Path $archivoJson -Leaf)" {
     $padre = Split-Path $archivoJson -Parent
     if (-not (Test-Path -LiteralPath $padre)) { New-Item -ItemType Directory -Path $padre -Force | Out-Null }
-    $data | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $archivoJson -Encoding UTF8
+    $json = $data | ConvertTo-Json -Depth 5
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllText($archivoJson, $json, $utf8NoBom)
   }
   Escribir "   [+] $(Split-Path $archivoJson -Leaf) -> $rutaNormalizada" 'Green'
 }
@@ -170,7 +172,9 @@ function Quitar-JsonConfig([string]$archivoJson, [string]$rutaQuitar) {
         if ($restantes.Count -eq 0) {
           Remove-Item -LiteralPath $archivoJson -Force
         } else {
-          [ordered]@{ entries = $restantes } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $archivoJson -Encoding UTF8
+          $json = [ordered]@{ entries = $restantes } | ConvertTo-Json -Depth 5
+          $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+          [System.IO.File]::WriteAllText($archivoJson, $json, $utf8NoBom)
         }
       }
     }
@@ -201,12 +205,6 @@ if ($Desinstalar) {
   foreach ($c in $Carpetas) { Desenlazar $c.Destino $c.Origen }
   foreach ($p in $Plugins) { Desenlazar (Join-Path $CarpetaPlugins $p.Name) $p.FullName }
   Quitar-JsonConfig (Join-Path $Casa '.gemini\config\plugins.json') $RepoPlugins
-  foreach ($p in $Plugins) {
-    $pSkills = Join-Path $p.FullName 'skills'
-    if (Test-Path -LiteralPath $pSkills) {
-      Quitar-JsonConfig (Join-Path $Casa '.gemini\config\skills.json') $pSkills
-    }
-  }
   Escribir "`nListo." 'Cyan'
   exit 0
 }
@@ -220,14 +218,8 @@ foreach ($p in $Plugins) { Enlazar (Join-Path $CarpetaPlugins $p.Name) $p.FullNa
 if ($Plugins.Count -eq 0) {
   Escribir '   (no hay plugins en el repo)' 'DarkGray'
 } else {
-  # Registrar en plugins.json y skills.json para garantizar compatibilidad con Antigravity en Windows
+  # Registrar en plugins.json sin BOM (permite que Antigravity descubra plugins en Windows sin fallos por junctions)
   Actualizar-JsonConfig (Join-Path $Casa '.gemini\config\plugins.json') $RepoPlugins
-  foreach ($p in $Plugins) {
-    $pSkills = Join-Path $p.FullName 'skills'
-    if (Test-Path -LiteralPath $pSkills) {
-      Actualizar-JsonConfig (Join-Path $Casa '.gemini\config\skills.json') $pSkills
-    }
-  }
 }
 
 # Enlaces a plugins que ya no existen en el repo (se borraron o renombraron)
