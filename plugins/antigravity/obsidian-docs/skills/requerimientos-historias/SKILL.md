@@ -62,7 +62,7 @@ Disparadores: el usuario lo dice («la HU-003 ya está en pruebas»), o `actuali
    python3 scripts/requerimientos.py mover "<proyecto>" HU-003 en-revision --nota "Pantalla de ingreso lista; falta probar códigos inválidos"
    python3 scripts/requerimientos.py mover "<proyecto>" HU-006 bloqueado --bloqueo "TI no ha aprobado WhatsApp Business"
    ```
-   Transiciones normales: `backlog → por-hacer → en-progreso → en-revision → hecho`. Para `por-hacer` la historia debe tener prioridad y, idealmente, fechas `inicio`/`fin` y responsable. Para `hecho` todos los criterios deben estar marcados (el script avisa si no).
+   Transiciones normales: `backlog → por-hacer → en-progreso → en-revision → hecho`. Para `por-hacer` la historia debe tener prioridad y, idealmente, fechas `inicio`/`fin` y responsable. Para `hecho` todos los criterios deben estar marcados: si falta alguno, el script **rechaza** el cambio. Solo si el usuario lo confirma explícitamente, repite con `--forzar` (queda anotado en la bitácora).
 4. **Fechas**: si cambian los plazos, edita `inicio` / `fin` en el frontmatter (formato `AAAA-MM-DD`) y anótalo en la bitácora.
 5. **Sincronizar** (`sincronizar`) y revisar alertas: vencidas, bloqueadas sin motivo, avance antes que su dependencia.
 6. **Guardar** con `git-documentacion`: `docs(<proyecto>): actualiza avance de HU-003 a en revisión` (o `… de 3 historias del sprint 4`) con `Refs: HU-003`.

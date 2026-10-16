@@ -594,8 +594,17 @@ def cmd_mover(a):
         return 2
     hoy = fecha(a.fecha) or dt.date.today()
     texto = p.read_text(encoding="utf-8")
-    fm, _ = leer_fm(texto)
+    fm, cuerpo_actual = leer_fm(texto)
     anterior = normalizar_estado(fm.get("estado_historia"))
+    if nuevo == "hecho":
+        pend = [c for c in checks(buscar(secciones(cuerpo_actual), "criterios")) if not c["hecho"]]
+        if pend and not a.forzar:
+            n = len(pend)
+            print(f"❌ {a.id.upper()} no pasa a Hecho: {'queda 1 criterio' if n == 1 else f'quedan {n} criterios'} de aceptación sin marcar:")
+            for c in pend[:5]:
+                print(f"   - [ ] {c['texto'][:90]}")
+            print("   Márcalos con - [x] si ya se cumplen, muévela a 'en-revision', o usa --forzar si el usuario lo confirma.")
+            return 1
     cambios = {"estado_historia": nuevo, "actualizado": hoy.isoformat()}
     if nuevo in ("en-progreso", "en-revision", "hecho") and not fm.get("inicio"):
         cambios["inicio"] = hoy.isoformat()
@@ -610,15 +619,12 @@ def cmd_mover(a):
     elif fm.get("bloqueo"):
         cambios["bloqueo"] = ""
     texto = poner_fm(texto, cambios)
-    entrada = f"- {hoy.isoformat()} · {ESTADOS.get(anterior, anterior)} → **{ESTADOS[nuevo]}**" + (f" · {a.nota}" if a.nota else "") + (f" · 🚧 {a.bloqueo}" if a.bloqueo else "")
+    entrada = f"- {hoy.isoformat()} · {ESTADOS.get(anterior, anterior)} → **{ESTADOS[nuevo]}**" + (f" · {a.nota}" if a.nota else "") + (f" · 🚧 {a.bloqueo}" if a.bloqueo else "") + (" · ⚠️ forzada con criterios pendientes" if nuevo == "hecho" and a.forzar else "")
     texto = agregar_bitacora(texto, entrada)
     p.write_text(texto, encoding="utf-8", newline="\n")
     print(f"✅ {a.id.upper()}: {ESTADOS.get(anterior, anterior)} → {ESTADOS[nuevo]}  ({p.relative_to(proyecto)})")
-    if nuevo == "hecho":
-        _, cuerpo = leer_fm(texto)
-        pend = [c for c in checks(buscar(secciones(cuerpo), "criterios")) if not c["hecho"]]
-        if pend:
-            print(f"   ⚠️ {'Queda 1 criterio' if len(pend) == 1 else f'Quedan {len(pend)} criterios'} de aceptación sin marcar: confírmalos o vuelve a 'en-revision'.")
+    if nuevo == "hecho" and a.forzar:
+        print("   ⚠️ Movida con --forzar: tiene criterios de aceptación sin marcar (queda registrado en la bitácora).")
     return 0
 
 
@@ -646,7 +652,7 @@ def main():
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("listar"); p.add_argument("proyecto"); p.add_argument("--json", action="store_true"); p.add_argument("--estado"); p.add_argument("--hoy")
     p = sub.add_parser("siguiente-id"); p.add_argument("proyecto"); p.add_argument("prefijo", choices=list(PREFIJOS) + [x.lower() for x in PREFIJOS])
-    p = sub.add_parser("mover"); p.add_argument("proyecto"); p.add_argument("id"); p.add_argument("estado"); p.add_argument("--nota"); p.add_argument("--fecha"); p.add_argument("--bloqueo")
+    p = sub.add_parser("mover"); p.add_argument("proyecto"); p.add_argument("id"); p.add_argument("estado"); p.add_argument("--nota"); p.add_argument("--fecha"); p.add_argument("--bloqueo"); p.add_argument("--forzar", action="store_true", help="Permite pasar a 'hecho' con criterios sin marcar (solo con confirmación del usuario)")
     p = sub.add_parser("sincronizar"); p.add_argument("proyecto"); p.add_argument("--hoy")
     a = ap.parse_args()
     return {"listar": cmd_listar, "siguiente-id": cmd_siguiente_id, "mover": cmd_mover, "sincronizar": cmd_sincronizar}[a.cmd](a)
