@@ -10,13 +10,14 @@ description: Actualiza la documentación existente (y el avance de las historias
 > - Ubicación habitual del plugin: `%USERPROFILE%\.gemini\config\plugins\obsidian-docs` (Windows), `~/.gemini/config/plugins/obsidian-docs` (macOS/Linux) o `.agents/plugins/obsidian-docs` dentro del proyecto.
 > - Donde dice `python3`: en **Windows** usa `py -3` (o `python` si `py` no existe); en macOS/Linux, `python3`.
 
+> Normalmente llegas aquí desde el skill `flujo-documentacion`, que decide el camino y hace el Cierre (validar → historias → marca de código → commits → push → dashboard).
 > Requisito: el proyecto ya fue documentado con el skill `documentar-proyecto-obsidian`. Si no existe `00 - Inicio.md`, usa ese skill primero.
 > Las plantillas y la guía visual están en `../documentar-proyecto-obsidian/references/`.
 
 ## Flujo
 
 0. **Sincronizar.** Si el vault es un repositorio git, ejecuta el flujo B del skill `git-documentacion` (traer cambios de otros) antes de editar.
-1. **Entender el cambio.** Identifica qué cambió leyendo, en este orden: lo que dice el usuario, `git log`/`git diff` desde la fecha `actualizado` más antigua de las notas afectadas, archivos modificados.
+1. **Entender el cambio.** Identifica qué cambió leyendo, en este orden: lo que dice el usuario, los commits de código pendientes (`commit_codigo` de `00 - Inicio.md` → `git log --stat <commit_codigo>..HEAD` en el repo de código; `vinculo.py estado` te dice cuántos son), `git diff` de lo que aún no tiene commit, y archivos modificados.
 2. **Mapear impacto.** Construye una tabla mental *archivo/área cambiada → notas afectadas*. Busca en el vault por:
    - la ruta del código (`ubicacion:` en frontmatter, o rutas en bloques de detalle técnico),
    - el nombre del componente, endpoint, tabla, medida o paso del proceso.
@@ -37,7 +38,7 @@ description: Actualiza la documentación existente (y el avance de las historias
    - Ejecuta `requerimientos.py sincronizar "<proyecto>"` para recalcular avances y el Tablero de avance.
 5. **Reconectar.** Actualiza índices (MOC), `## 🔗 Relacionado` y el `Mapa del proyecto.canvas` si hay notas nuevas.
 6. **Validar.** Ejecuta `python3 ../documentar-proyecto-obsidian/scripts/validar_vault.py "<carpeta del proyecto>"` y corrige errores.
-7. **Guardar en git.** Si el vault es un repositorio git, usa el skill `git-documentacion` (flujo C): un commit por proyecto cuyo mensaje resume lo que acabas de registrar en `Historial de cambios.md` (el "Por qué" y el "⚠️ Cambia para ti" van al cuerpo del commit; las historias que avanzaron van en el pie `Refs: HU-003, HU-004`). Muestra el plan de commits y espera confirmación antes del push.
+7. **Marcar y guardar en git.** Si el proyecto tiene vínculo con un repo de código, ejecuta `python3 ../flujo-documentacion/scripts/vinculo.py marcar` (anota en `00 - Inicio.md` hasta qué commit de código quedó documentado). Luego, si el vault es un repositorio git, usa el skill `git-documentacion` (flujo C): un commit por proyecto cuyo mensaje resume lo que acabas de registrar en `Historial de cambios.md` (el "Por qué" y el "⚠️ Cambia para ti" van al cuerpo del commit; las historias que avanzaron van en el pie `Refs: HU-003, HU-004`). Muestra el plan de commits y espera confirmación antes del push.
 8. **Informar.** Lista al usuario las notas creadas/modificadas, los commits hechos y lo que quedó pendiente de confirmar.
 
 ## Reglas

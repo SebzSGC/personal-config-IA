@@ -52,6 +52,7 @@ Ejecuta `references/checklist-calidad.md` sobre lo creado. Corrige antes de entr
 
 ### Paso 6 · Entregar
 Resume al usuario: cuántas notas, dónde empezar (`00 - Inicio.md`), qué quedó marcado como pendiente de confirmar.
+Si documentaste desde un repositorio de código, deja el vínculo para que las próximas actualizaciones sean automáticas: `python3 ../flujo-documentacion/scripts/vinculo.py vincular --proyecto "<Proyecto>" --repo "<repo de docs>"` y `vinculo.py marcar` (ver skill `flujo-documentacion`).
 Si el vault es un repositorio git (o el usuario quiere subirlo a uno), ofrece guardar con el skill `git-documentacion`: un commit `feat(<proyecto>): crea la documentación de <Proyecto>` y push tras su confirmación.
 
 ## Convenciones del vault
