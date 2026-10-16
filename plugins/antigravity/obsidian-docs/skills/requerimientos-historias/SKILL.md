@@ -5,6 +5,11 @@ description: Convierte notas (actas de reunión, ideas, correos, texto que pega 
 
 # Requerimientos e historias de usuario
 
+> [!note] Cómo ejecutar los scripts de este plugin
+> - Las rutas `scripts/…` y `../…` de este skill son **relativas a la carpeta de este `SKILL.md`**, no a la terminal (que arranca en el proyecto abierto). Antes de ejecutar, conviértelas a ruta absoluta, p. ej. `"<carpeta de este SKILL.md>/scripts/…"` o `"<carpeta de este SKILL.md>/../documentar-proyecto-obsidian/scripts/validar_vault.py"`.
+> - Ubicación habitual del plugin: `%USERPROFILE%\.gemini\config\plugins\obsidian-docs` (Windows), `~/.gemini/config/plugins/obsidian-docs` (macOS/Linux) o `.agents/plugins/obsidian-docs` dentro del proyecto.
+> - Donde dice `python3`: en **Windows** usa `py -3` (o `python` si `py` no existe); en macOS/Linux, `python3`.
+
 Objetivo: que cualquier persona abra `Tablero de avance` y sepa **qué se va a construir, en qué va cada cosa y qué está frenado**, y que el equipo técnico tenga criterios de aceptación verificables.
 
 Herramienta: `scripts/requerimientos.py` (Python 3.8+). `<proyecto>` es la carpeta del proyecto (raíz del vault).

@@ -5,6 +5,11 @@ description: Administra git en el repositorio de documentación Obsidian (un vau
 
 # Git para la documentación
 
+> [!note] Cómo ejecutar los scripts de este plugin
+> - Las rutas `scripts/…` y `../…` de este skill son **relativas a la carpeta de este `SKILL.md`**, no a la terminal (que arranca en el proyecto abierto). Antes de ejecutar, conviértelas a ruta absoluta, p. ej. `"<carpeta de este SKILL.md>/scripts/…"` o `"<carpeta de este SKILL.md>/../documentar-proyecto-obsidian/scripts/validar_vault.py"`.
+> - Ubicación habitual del plugin: `%USERPROFILE%\.gemini\config\plugins\obsidian-docs` (Windows), `~/.gemini/config/plugins/obsidian-docs` (macOS/Linux) o `.agents/plugins/obsidian-docs` dentro del proyecto.
+> - Donde dice `python3`: en **Windows** usa `py -3` (o `python` si `py` no existe); en macOS/Linux, `python3`.
+
 El historial de git es **la bitácora del proyecto**: alguien que lea `git log` (o el dashboard) debe entender qué cambió en la documentación **sin abrir los archivos**.
 
 Modelo: **un repositorio, una carpeta por proyecto, y cada carpeta es un vault independiente** (con su propio `.obsidian`). Nunca un `.obsidian` en la raíz del repo a la vez que en los proyectos (vaults anidados): `preparar` y `estado` lo detectan.

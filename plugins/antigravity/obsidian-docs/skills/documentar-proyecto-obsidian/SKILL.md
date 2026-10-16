@@ -5,6 +5,11 @@ description: Documenta cualquier proyecto (software, datos/BI, infraestructura, 
 
 # Documentar un proyecto en Obsidian
 
+> [!note] Cómo ejecutar los scripts de este plugin
+> - Las rutas `scripts/…` y `../…` de este skill son **relativas a la carpeta de este `SKILL.md`**, no a la terminal (que arranca en el proyecto abierto). Antes de ejecutar, conviértelas a ruta absoluta, p. ej. `"<carpeta de este SKILL.md>/scripts/…"` o `"<carpeta de este SKILL.md>/../documentar-proyecto-obsidian/scripts/validar_vault.py"`.
+> - Ubicación habitual del plugin: `%USERPROFILE%\.gemini\config\plugins\obsidian-docs` (Windows), `~/.gemini/config/plugins/obsidian-docs` (macOS/Linux) o `.agents/plugins/obsidian-docs` dentro del proyecto.
+> - Donde dice `python3`: en **Windows** usa `py -3` (o `python` si `py` no existe); en macOS/Linux, `python3`.
+
 Tu objetivo: que **una persona no técnica entienda de qué va el proyecto en 2 minutos**
 y que **una persona técnica pueda operarlo y modificarlo en 30 minutos**, leyendo el mismo vault.
 

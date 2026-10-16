@@ -3,7 +3,10 @@
 Corre primero el validador automático:
 
 ```bash
-python3 <ruta-del-plugin>/skills/documentar-proyecto-obsidian/scripts/validar_vault.py "<ruta del proyecto en el vault>"
+# Windows (si `py` no existe, usa `python`)
+py -3 "%USERPROFILE%\.gemini\config\plugins\obsidian-docs\skills\documentar-proyecto-obsidian\scripts\validar_vault.py" "<ruta del proyecto en el vault>"
+# macOS / Linux
+python3 ~/.gemini/config/plugins/obsidian-docs/skills/documentar-proyecto-obsidian/scripts/validar_vault.py "<ruta del proyecto en el vault>"
 ```
 
 Luego revisa manualmente:

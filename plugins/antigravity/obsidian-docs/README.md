@@ -53,7 +53,7 @@ agy plugin list
 Reinicia Antigravity y verifica en **Customizations** que aparezcan los 5 skills, las 2 reglas y el agente.
 El agente `revisor-documentacion` aparece en el selector de agentes porque tiene `mainAgent: true`; también lo puede invocar el agente principal como subagente (`subagent: true`).
 
-> Requisitos: **Python 3.8+** (validador y ayudante de git) y **Git**.
+> Requisitos: **Python 3.8+** (validador y ayudante de git) y **Git**. En Windows los comandos usan `py -3` (o `python`); `python3` es para macOS/Linux.
 
 ## 💬 Cómo usarlo (ejemplos de prompts)
 
@@ -106,8 +106,13 @@ Un commit por proyecto, tipo (`feat`, `docs`, `fix`, `refactor`, `style`, `chore
 Así el historial de git y el dashboard cuentan qué cambió sin abrir los archivos.
 
 Validar manualmente en cualquier momento:
+```powershell
+# Windows (si `py` no existe, usa `python`)
+py -3 "$env:USERPROFILE\.gemini\config\plugins\obsidian-docs\skills\documentar-proyecto-obsidian\scripts\validar_vault.py" "C:\Users\yo\Vault\Proyectos\Mi proyecto"
+```
 ```bash
-python3 ~/.gemini/config/plugins/obsidian-docs/skills/documentar-proyecto-obsidian/scripts/validar_vault.py "C:/Users/yo/Vault/Proyectos/Mi proyecto"
+# macOS / Linux
+python3 ~/.gemini/config/plugins/obsidian-docs/skills/documentar-proyecto-obsidian/scripts/validar_vault.py "$HOME/Vault/Proyectos/Mi proyecto"
 ```
 
 ## 🧩 Plugins de Obsidian recomendados (opcionales)
