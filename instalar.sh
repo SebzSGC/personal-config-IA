@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Conecta este repositorio con Claude y Antigravity (macOS / Linux) mediante enlaces simbólicos.
+# Conecta este repositorio con Claude y Antigravity (macOS / Linux) mediante enlaces simbólicos,
+# y registra el repo como marketplace local de Claude Code ("personal-config-ia").
 #   ./instalar.sh              instala o actualiza los enlaces
 #   ./instalar.sh --simular    muestra lo que haría sin cambiar nada
 #   ./instalar.sh --desinstalar  quita los enlaces y deja una copia local
@@ -71,30 +72,6 @@ desenlazar() { # desenlazar destino origen
   fi
 }
 
-registrar_json() {
-  local archivo="$1" ruta="$2"
-  [ "$SIMULAR" = 1 ] && { echo "   (simulación) registrar $ruta en $(basename "$archivo")"; return; }
-  python3 -c "
-import json, os, sys
-archivo, ruta = sys.argv[1], sys.argv[2]
-os.makedirs(os.path.dirname(archivo), exist_ok=True)
-data = {'entries': []}
-if os.path.exists(archivo):
-    try:
-        with open(archivo, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-    except Exception:
-        pass
-entries = data.get('entries', [])
-if not any(e.get('path', '').rstrip('/') == ruta.rstrip('/') for e in entries):
-    entries.append({'path': ruta})
-data['entries'] = entries
-with open(archivo, 'w', encoding='utf-8') as f:
-    json.dump(data, f, indent=2)
-" "$archivo" "$ruta" 2>/dev/null || true
-  echo "   [+] $(basename "$archivo") -> $ruta"
-}
-
 quitar_json() {
   local archivo="$1" ruta="$2"
   [ -f "$archivo" ] || return 0
@@ -116,6 +93,30 @@ except Exception:
 " "$archivo" "$ruta" 2>/dev/null || true
 }
 
+silencio() { "$@" >/dev/null 2>&1 || true; }
+
+claude_plugins() { # claude_plugins instalar|desinstalar
+  local mercado="$REPO/.claude-plugin/marketplace.json"
+  [ -f "$mercado" ] || return 0
+  if ! command -v claude >/dev/null 2>&1; then
+    echo "   (Claude Code no está en el PATH: agrega el marketplace a mano, ver README)"; return 0
+  fi
+  local nombre plugins
+  nombre="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["name"])' "$mercado")"
+  plugins="$(python3 -c 'import json,sys; print(" ".join(p["name"] for p in json.load(open(sys.argv[1]))["plugins"]))' "$mercado")"
+  if [ "$1" = instalar ]; then
+    hacer "registrar marketplace $nombre en Claude Code" silencio claude plugin marketplace add "$REPO"
+    for p in $plugins; do
+      hacer "instalar $p@$nombre en Claude Code" silencio claude plugin install "$p@$nombre"
+      echo "   [+] Claude Code: $p@$nombre"
+    done
+  else
+    for p in $plugins; do hacer "desinstalar $p@$nombre de Claude Code" silencio claude plugin uninstall "$p@$nombre"; done
+    hacer "quitar marketplace $nombre de Claude Code" silencio claude plugin marketplace remove "$nombre"
+    echo "   [-] Claude Code: plugins de $nombre desinstalados"
+  fi
+}
+
 CARPETAS=(
   "$CASA/.claude/skills|$REPO/skills"
   "$CASA/.gemini/config/skills|$REPO/skills"
@@ -123,7 +124,8 @@ CARPETAS=(
   "$CASA/.gemini/config/agents|$REPO/agents/antigravity"
 )
 PLUGINS_DESTINO="$CASA/.gemini/config/plugins"
-PLUGINS_REPO="$REPO/plugins/antigravity"
+PLUGINS_REPO="$REPO/plugins"
+JSON_VIEJO="$CASA/.gemini/config/plugins.json"   # registro antiguo, ya no se usa
 
 echo; echo "Repositorio: $REPO"
 [ "$SIMULAR" = 1 ] && echo "Modo simulación: no se cambia nada."
@@ -131,8 +133,8 @@ echo; echo "Repositorio: $REPO"
 if [ "$DESINSTALAR" = 1 ]; then
   echo; echo "Quitando enlaces (se deja una copia local de cada cosa):"
   for par in "${CARPETAS[@]}"; do desenlazar "${par%%|*}" "${par##*|}"; done
-  for p in "$PLUGINS_REPO"/*/; do [ -d "$p" ] && desenlazar "$PLUGINS_DESTINO/$(basename "$p")" "${p%/}"; done
-  quitar_json "$CASA/.gemini/config/plugins.json" "$PLUGINS_REPO"
+  for p in "$PLUGINS_REPO"/*/; do [ -f "$p/plugin.json" ] && desenlazar "$PLUGINS_DESTINO/$(basename "$p")" "${p%/}"; done
+  echo; echo "Claude Code:"; claude_plugins desinstalar
   echo; echo "Listo."; exit 0
 fi
 
@@ -142,14 +144,11 @@ for par in "${CARPETAS[@]}"; do enlazar "${par%%|*}" "${par##*|}" 1; done
 echo; echo "Plugins de Antigravity:"
 hay=0
 for p in "$PLUGINS_REPO"/*/; do
-  [ -d "$p" ] || continue; hay=1
+  [ -f "$p/plugin.json" ] || continue; hay=1
   enlazar "$PLUGINS_DESTINO/$(basename "$p")" "${p%/}" 0
 done
-if [ "$hay" = 1 ]; then
-  registrar_json "$CASA/.gemini/config/plugins.json" "$PLUGINS_REPO"
-else
-  echo "   (no hay plugins en el repo)"
-fi
+[ "$hay" = 1 ] || echo "   (no hay plugins en el repo)"
+quitar_json "$JSON_VIEJO" "$REPO/plugins/antigravity"; quitar_json "$JSON_VIEJO" "$PLUGINS_REPO"
 
 # Enlaces a plugins que ya no existen en el repo
 if [ -d "$PLUGINS_DESTINO" ]; then
@@ -160,6 +159,8 @@ if [ -d "$PLUGINS_DESTINO" ]; then
     fi
   done
 fi
+
+echo; echo "Plugins de Claude Code:"; claude_plugins instalar
 
 echo
 if [ "${#RESUMEN[@]}" -gt 0 ]; then echo "Para revisar:"; for r in "${RESUMEN[@]}"; do echo "   - $r"; done; fi

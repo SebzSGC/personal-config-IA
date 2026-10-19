@@ -9,7 +9,10 @@
     ~/.gemini/config/skills       -> skills/
     ~/.claude/agents              -> agents/claude/
     ~/.gemini/config/agents       -> agents/antigravity/
-    ~/.gemini/config/plugins/<x>  -> plugins/antigravity/<x>   (uno por plugin)
+    ~/.gemini/config/plugins/<x>  -> plugins/<x>   (uno por plugin con plugin.json)
+
+  Y en Claude Code registra este repo como marketplace local ("personal-config-ia") e instala sus plugins.
+  Un marketplace local se carga en el sitio: igual que las uniones, lo que cambia en el repo ya esta activo.
 
   Las uniones no requieren permisos de administrador. Despues de un "git pull" los cambios ya estan activos.
 
@@ -132,35 +135,6 @@ function Desenlazar([string]$destino, [string]$origen) {
   Escribir "   [-] $nombre ahora es una copia local (ya no sigue al repo)" 'Yellow'
 }
 
-function Actualizar-JsonConfig([string]$archivoJson, [string]$rutaAgregar) {
-  $rutaNormalizada = $rutaAgregar.Replace('\', '/')
-  $data = [ordered]@{ entries = @() }
-  if (Test-Path -LiteralPath $archivoJson) {
-    try {
-      $existente = Get-Content -LiteralPath $archivoJson -Raw -Encoding UTF8 | ConvertFrom-Json
-      if ($existente.entries) { $data.entries = @($existente.entries) }
-    } catch {}
-  }
-  $yaExiste = $false
-  foreach ($e in $data.entries) {
-    if ($e.path -and $e.path.Replace('\', '/').ToLowerInvariant() -eq $rutaNormalizada.ToLowerInvariant()) {
-      $yaExiste = $true
-      break
-    }
-  }
-  if (-not $yaExiste) {
-    $data.entries += [PSCustomObject]@{ path = $rutaNormalizada }
-  }
-  Hacer "registrar $rutaNormalizada en $(Split-Path $archivoJson -Leaf)" {
-    $padre = Split-Path $archivoJson -Parent
-    if (-not (Test-Path -LiteralPath $padre)) { New-Item -ItemType Directory -Path $padre -Force | Out-Null }
-    $json = $data | ConvertTo-Json -Depth 5
-    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-    [System.IO.File]::WriteAllText($archivoJson, $json, $utf8NoBom)
-  }
-  Escribir "   [+] $(Split-Path $archivoJson -Leaf) -> $rutaNormalizada" 'Green'
-}
-
 function Quitar-JsonConfig([string]$archivoJson, [string]$rutaQuitar) {
   if (-not (Test-Path -LiteralPath $archivoJson)) { return }
   $rutaNormalizada = $rutaQuitar.Replace('\', '/').ToLowerInvariant()
@@ -181,6 +155,32 @@ function Quitar-JsonConfig([string]$archivoJson, [string]$rutaQuitar) {
   } catch {}
 }
 
+function Claude-Plugins([bool]$instalar) {
+  # Claude Code: este repo es un marketplace local (.claude-plugin/marketplace.json)
+  $cli = Get-Command claude -ErrorAction SilentlyContinue
+  if (-not $cli) { Escribir '   (Claude Code no esta en el PATH: agrega el marketplace a mano, ver README)' 'DarkGray'; return }
+  $mercado = Join-Path $Repo '.claude-plugin\marketplace.json'
+  if (-not (Test-Path -LiteralPath $mercado)) { return }
+  $datos = Get-Content -LiteralPath $mercado -Raw -Encoding UTF8 | ConvertFrom-Json
+  $nombre = $datos.name
+  $prev = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
+  try {
+    if ($instalar) {
+      Hacer "registrar marketplace $nombre en Claude Code" { & claude plugin marketplace add "$Repo" 2>&1 | Out-Null }
+      foreach ($p in @($datos.plugins)) {
+        Hacer "instalar $($p.name)@$nombre en Claude Code" { & claude plugin install "$($p.name)@$nombre" 2>&1 | Out-Null }
+        Escribir "   [+] Claude Code: $($p.name)@$nombre" 'Green'
+      }
+    } else {
+      foreach ($p in @($datos.plugins)) {
+        Hacer "desinstalar $($p.name)@$nombre de Claude Code" { & claude plugin uninstall "$($p.name)@$nombre" 2>&1 | Out-Null }
+      }
+      Hacer "quitar marketplace $nombre de Claude Code" { & claude plugin marketplace remove $nombre 2>&1 | Out-Null }
+      Escribir "   [-] Claude Code: plugins de $nombre desinstalados" 'Yellow'
+    }
+  } finally { $ErrorActionPreference = $prev }
+}
+
 # ───────────────────────── Comprobaciones ─────────────────────────
 if ($PSVersionTable.PSVersion.Major -ge 6 -and -not $IsWindows) {
   Escribir 'Este script es para Windows. En macOS o Linux usa ./instalar.sh' 'Red'; exit 1
@@ -196,15 +196,19 @@ $Carpetas = @(
   @{ Destino = Join-Path $Casa '.gemini\config\agents';  Origen = Join-Path $Repo 'agents\antigravity' }
 )
 $CarpetaPlugins = Join-Path $Casa '.gemini\config\plugins'
-$RepoPlugins    = Join-Path $Repo 'plugins\antigravity'
-$Plugins = @(Get-ChildItem -LiteralPath $RepoPlugins -Directory -ErrorAction SilentlyContinue)
+$RepoPlugins    = Join-Path $Repo 'plugins'
+$Plugins = @(Get-ChildItem -LiteralPath $RepoPlugins -Directory -ErrorAction SilentlyContinue |
+             Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName 'plugin.json') })
+# Registro antiguo en plugins.json (ya no se usa: Antigravity descubre los plugins por la carpeta)
+$JsonViejo = Join-Path $Casa '.gemini\config\plugins.json'
 
 # ───────────────────────── Desinstalar ─────────────────────────
 if ($Desinstalar) {
   Escribir "`nQuitando enlaces (se deja una copia local de cada cosa):" 'Cyan'
   foreach ($c in $Carpetas) { Desenlazar $c.Destino $c.Origen }
   foreach ($p in $Plugins) { Desenlazar (Join-Path $CarpetaPlugins $p.Name) $p.FullName }
-  Quitar-JsonConfig (Join-Path $Casa '.gemini\config\plugins.json') $RepoPlugins
+  Escribir "`nClaude Code:" 'Cyan'
+  Claude-Plugins $false
   Escribir "`nListo." 'Cyan'
   exit 0
 }
@@ -215,12 +219,8 @@ foreach ($c in $Carpetas) { Enlazar $c.Destino $c.Origen $true }
 
 Escribir "`nPlugins de Antigravity:" 'Cyan'
 foreach ($p in $Plugins) { Enlazar (Join-Path $CarpetaPlugins $p.Name) $p.FullName $false }
-if ($Plugins.Count -eq 0) {
-  Escribir '   (no hay plugins en el repo)' 'DarkGray'
-} else {
-  # Registrar en plugins.json sin BOM (permite que Antigravity descubra plugins en Windows sin fallos por junctions)
-  Actualizar-JsonConfig (Join-Path $Casa '.gemini\config\plugins.json') $RepoPlugins
-}
+if ($Plugins.Count -eq 0) { Escribir '   (no hay plugins en el repo)' 'DarkGray' }
+foreach ($viejo in @((Join-Path $Repo 'plugins\antigravity'), $RepoPlugins)) { Quitar-JsonConfig $JsonViejo $viejo }
 
 # Enlaces a plugins que ya no existen en el repo (se borraron o renombraron)
 foreach ($i in @(Get-ChildItem -LiteralPath $CarpetaPlugins -Force -ErrorAction SilentlyContinue)) {
@@ -230,6 +230,9 @@ foreach ($i in @(Get-ChildItem -LiteralPath $CarpetaPlugins -Force -ErrorAction 
     $Resumen.Add("Plugin quitado (ya no esta en el repo): $($i.Name)")
   }
 }
+
+Escribir "`nPlugins de Claude Code:" 'Cyan'
+Claude-Plugins $true
 
 # ───────────────────────── Resumen ─────────────────────────
 Escribir ''

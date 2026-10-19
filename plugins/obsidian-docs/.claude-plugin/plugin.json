@@ -1,0 +1,20 @@
+{
+  "name": "obsidian-docs",
+  "displayName": "Obsidian Docs",
+  "description": "Documenta cualquier proyecto (software, datos, procesos, negocio) en un Vault de Obsidian y la mantiene al día: un orquestador decide si crear o actualizar y cierra siempre con git (commits claros por proyecto, push con confirmación). Incluye diagramas Mermaid y Canvas, glosario y ejemplos para lectores técnicos y no técnicos, requerimientos e historias de usuario con tablero y cronograma, y un dashboard HTML del repositorio de vaults.",
+  "author": {
+    "name": "SebzSGC"
+  },
+  "repository": "https://github.com/SebzSGC/personal-config-IA",
+  "keywords": [
+    "obsidian",
+    "documentacion",
+    "git",
+    "historias-de-usuario",
+    "dashboard"
+  ],
+  "agents": [
+    "./claude/agents/revisor-documentacion.md"
+  ],
+  "hooks": "./claude/hooks.json"
+}

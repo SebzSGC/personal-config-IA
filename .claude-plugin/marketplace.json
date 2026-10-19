@@ -1,0 +1,13 @@
+{
+  "name": "personal-config-ia",
+  "owner": { "name": "SebzSGC" },
+  "description": "Plugins personales de SebzSGC para Claude Code (los mismos que usa Antigravity).",
+  "plugins": [
+    {
+      "name": "obsidian-docs",
+      "source": "./plugins/obsidian-docs",
+      "description": "Documentación de proyectos en Obsidian con git, historias de usuario y dashboard del repositorio de vaults.",
+      "category": "documentacion"
+    }
+  ]
+}
