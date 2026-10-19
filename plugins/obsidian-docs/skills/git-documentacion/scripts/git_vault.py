@@ -170,10 +170,21 @@ def es_texto(ruta):
     return Path(ruta).suffix.lower() in EXT_TEXTO
 
 
-def buscar_secretos(texto):
+# Archivos generados que no se escanean: código compilado, sin datos del usuario.
+# (p. ej. la plantilla del dashboard trae en React la lista de tipos de campo de formulario).
+SIN_ESCANEO = {"_dashboard/plantilla.html"}
+MAX_LINEA_MINIFICADA = 2000  # en .html/.js/.css, una línea más larga es código compilado
+
+
+def omitir_escaneo(ruta):
+    return ruta.replace("\\", "/") in SIN_ESCANEO
+
+
+def buscar_secretos(texto, ruta=""):
     hallazgos = []
+    compilado = Path(ruta).suffix.lower() in (".html", ".htm", ".js", ".mjs", ".css")
     for n, linea in enumerate(texto.splitlines(), 1):
-        if "<SECRETO" in linea:
+        if "<SECRETO" in linea or (compilado and len(linea) > MAX_LINEA_MINIFICADA):
             continue
         for rx, desc in RE_SECRETOS:
             if rx.search(linea):
@@ -384,8 +395,8 @@ def analizar_archivo(raiz, c, hay_head):
         if est == "modificado":
             info["secciones_nuevas"] = [h for h in h_d if h not in h_a][:6]
             info["secciones_quitadas"] = [h for h in h_a if h not in h_d][:6]
-    if actual:
-        info["secretos"] = buscar_secretos(actual)
+    if actual and not omitir_escaneo(ruta):
+        info["secretos"] = buscar_secretos(actual, ruta)
     return info
 
 
@@ -665,8 +676,8 @@ def cmd_escanear_secretos(a):
             problemas += 1
         elif mb >= LIMITE_AVISO_MB:
             print(f"⚠️  {r}: {mb:.1f} MB (considera Git LFS)", file=sys.stderr)
-        if es_texto(r):
-            for n, d in buscar_secretos(leer(r)):
+        if es_texto(r) and not omitir_escaneo(r):
+            for n, d in buscar_secretos(leer(r), r):
                 print(f"🔐 {r}:{n} → {d}. Reemplázalo por <SECRETO: ver gestor de claves>", file=sys.stderr)
                 problemas += 1
     if problemas:
@@ -680,9 +691,12 @@ def cmd_escanear_secretos(a):
 HOOK = """#!/bin/sh
 # Instalado por git_vault.py (plugin obsidian-docs). Para saltarlo en un caso puntual: git commit --no-verify
 DIR="$(cd "$(dirname "$0")" && pwd)"
-PY="$(command -v python3 || command -v python || command -v py)"
-if [ -z "$PY" ]; then echo "git_vault: no se encontró Python; se omite la verificación" >&2; exit 0; fi
-exec "$PY" "$DIR/git_vault.py" {comando}
+# Se prueba cada opción antes de usarla: en Windows «python3» suele ser el atajo de la Microsoft Store, que no es Python
+for PY in "py -3" python3 python; do
+  if $PY -c "import sys" >/dev/null 2>&1; then exec $PY "$DIR/git_vault.py" {comando}; fi
+done
+echo "git_vault: no se encontró Python; se omite la verificación" >&2
+exit 0
 """
 
 
