@@ -135,6 +135,35 @@ function Desenlazar([string]$destino, [string]$origen) {
   Escribir "   [-] $nombre ahora es una copia local (ya no sigue al repo)" 'Yellow'
 }
 
+function Actualizar-JsonConfig([string]$archivoJson, [string]$rutaAgregar) {
+  $rutaNormalizada = $rutaAgregar.Replace('\', '/')
+  $data = [ordered]@{ entries = @() }
+  if (Test-Path -LiteralPath $archivoJson) {
+    try {
+      $existente = Get-Content -LiteralPath $archivoJson -Raw -Encoding UTF8 | ConvertFrom-Json
+      if ($existente.entries) { $data.entries = @($existente.entries) }
+    } catch {}
+  }
+  $yaExiste = $false
+  foreach ($e in $data.entries) {
+    if ($e.path -and $e.path.Replace('\', '/').ToLowerInvariant() -eq $rutaNormalizada.ToLowerInvariant()) {
+      $yaExiste = $true
+      break
+    }
+  }
+  if (-not $yaExiste) {
+    $data.entries += [PSCustomObject]@{ path = $rutaNormalizada }
+  }
+  Hacer "registrar $rutaNormalizada en $(Split-Path $archivoJson -Leaf)" {
+    $padre = Split-Path $archivoJson -Parent
+    if (-not (Test-Path -LiteralPath $padre)) { New-Item -ItemType Directory -Path $padre -Force | Out-Null }
+    $json = $data | ConvertTo-Json -Depth 5
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllText($archivoJson, $json, $utf8NoBom)
+  }
+  Escribir "   [+] $(Split-Path $archivoJson -Leaf) -> $rutaNormalizada" 'Green'
+}
+
 function Quitar-JsonConfig([string]$archivoJson, [string]$rutaQuitar) {
   if (-not (Test-Path -LiteralPath $archivoJson)) { return }
   $rutaNormalizada = $rutaQuitar.Replace('\', '/').ToLowerInvariant()
@@ -199,14 +228,16 @@ $CarpetaPlugins = Join-Path $Casa '.gemini\config\plugins'
 $RepoPlugins    = Join-Path $Repo 'plugins'
 $Plugins = @(Get-ChildItem -LiteralPath $RepoPlugins -Directory -ErrorAction SilentlyContinue |
              Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName 'plugin.json') })
-# Registro antiguo en plugins.json (ya no se usa: Antigravity descubre los plugins por la carpeta)
-$JsonViejo = Join-Path $Casa '.gemini\config\plugins.json'
+# plugins.json: en Windows, Antigravity no descubre plugins que estan detras de una union de carpeta;
+# registrar la carpeta de plugins del repo hace que los encuentre.
+$JsonPlugins = Join-Path $Casa '.gemini\config\plugins.json'
 
 # ───────────────────────── Desinstalar ─────────────────────────
 if ($Desinstalar) {
   Escribir "`nQuitando enlaces (se deja una copia local de cada cosa):" 'Cyan'
   foreach ($c in $Carpetas) { Desenlazar $c.Destino $c.Origen }
   foreach ($p in $Plugins) { Desenlazar (Join-Path $CarpetaPlugins $p.Name) $p.FullName }
+  Quitar-JsonConfig $JsonPlugins $RepoPlugins
   Escribir "`nClaude Code:" 'Cyan'
   Claude-Plugins $false
   Escribir "`nListo." 'Cyan'
@@ -219,8 +250,13 @@ foreach ($c in $Carpetas) { Enlazar $c.Destino $c.Origen $true }
 
 Escribir "`nPlugins de Antigravity:" 'Cyan'
 foreach ($p in $Plugins) { Enlazar (Join-Path $CarpetaPlugins $p.Name) $p.FullName $false }
-if ($Plugins.Count -eq 0) { Escribir '   (no hay plugins en el repo)' 'DarkGray' }
-foreach ($viejo in @((Join-Path $Repo 'plugins\antigravity'), $RepoPlugins)) { Quitar-JsonConfig $JsonViejo $viejo }
+if ($Plugins.Count -eq 0) {
+  Escribir '   (no hay plugins en el repo)' 'DarkGray'
+} else {
+  Actualizar-JsonConfig $JsonPlugins $RepoPlugins
+}
+# Ruta de antes de la reorganizacion (plugins\antigravity), ya no existe
+Quitar-JsonConfig $JsonPlugins (Join-Path $Repo 'plugins\antigravity')
 
 # Enlaces a plugins que ya no existen en el repo (se borraron o renombraron)
 foreach ($i in @(Get-ChildItem -LiteralPath $CarpetaPlugins -Force -ErrorAction SilentlyContinue)) {

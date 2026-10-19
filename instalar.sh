@@ -72,6 +72,30 @@ desenlazar() { # desenlazar destino origen
   fi
 }
 
+registrar_json() {
+  local archivo="$1" ruta="$2"
+  [ "$SIMULAR" = 1 ] && { echo "   (simulación) registrar $ruta en $(basename "$archivo")"; return; }
+  python3 -c "
+import json, os, sys
+archivo, ruta = sys.argv[1], sys.argv[2]
+os.makedirs(os.path.dirname(archivo), exist_ok=True)
+data = {'entries': []}
+if os.path.exists(archivo):
+    try:
+        with open(archivo, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+    except Exception:
+        pass
+entries = data.get('entries', [])
+if not any(e.get('path', '').rstrip('/') == ruta.rstrip('/') for e in entries):
+    entries.append({'path': ruta})
+data['entries'] = entries
+with open(archivo, 'w', encoding='utf-8') as f:
+    json.dump(data, f, indent=2)
+" "$archivo" "$ruta" 2>/dev/null || true
+  echo "   [+] $(basename "$archivo") -> $ruta"
+}
+
 quitar_json() {
   local archivo="$1" ruta="$2"
   [ -f "$archivo" ] || return 0
@@ -125,7 +149,7 @@ CARPETAS=(
 )
 PLUGINS_DESTINO="$CASA/.gemini/config/plugins"
 PLUGINS_REPO="$REPO/plugins"
-JSON_VIEJO="$CASA/.gemini/config/plugins.json"   # registro antiguo, ya no se usa
+JSON_PLUGINS="$CASA/.gemini/config/plugins.json"   # registro de la carpeta de plugins (Antigravity)
 
 echo; echo "Repositorio: $REPO"
 [ "$SIMULAR" = 1 ] && echo "Modo simulación: no se cambia nada."
@@ -134,6 +158,7 @@ if [ "$DESINSTALAR" = 1 ]; then
   echo; echo "Quitando enlaces (se deja una copia local de cada cosa):"
   for par in "${CARPETAS[@]}"; do desenlazar "${par%%|*}" "${par##*|}"; done
   for p in "$PLUGINS_REPO"/*/; do [ -f "$p/plugin.json" ] && desenlazar "$PLUGINS_DESTINO/$(basename "$p")" "${p%/}"; done
+  quitar_json "$JSON_PLUGINS" "$PLUGINS_REPO"
   echo; echo "Claude Code:"; claude_plugins desinstalar
   echo; echo "Listo."; exit 0
 fi
@@ -147,8 +172,8 @@ for p in "$PLUGINS_REPO"/*/; do
   [ -f "$p/plugin.json" ] || continue; hay=1
   enlazar "$PLUGINS_DESTINO/$(basename "$p")" "${p%/}" 0
 done
-[ "$hay" = 1 ] || echo "   (no hay plugins en el repo)"
-quitar_json "$JSON_VIEJO" "$REPO/plugins/antigravity"; quitar_json "$JSON_VIEJO" "$PLUGINS_REPO"
+if [ "$hay" = 1 ]; then registrar_json "$JSON_PLUGINS" "$PLUGINS_REPO"; else echo "   (no hay plugins en el repo)"; fi
+quitar_json "$JSON_PLUGINS" "$REPO/plugins/antigravity"   # ruta de antes de la reorganización
 
 # Enlaces a plugins que ya no existen en el repo
 if [ -d "$PLUGINS_DESTINO" ]; then
