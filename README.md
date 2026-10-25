@@ -44,7 +44,7 @@ flowchart LR
 
 ## 🚀 Equipo nuevo (una sola vez)
 
-**Requisitos:** Git. Para el plugin `obsidian-docs`: Python 3.8+. Para que el instalador registre los plugins en Claude, el comando `claude` en el PATH.
+**Requisitos:** Git. Para el plugin `obsidian-docs`: Python 3.8+. Si vas a configurar Claude Code, el comando `claude` en el PATH.
 
 ```powershell
 cd $HOME
@@ -53,13 +53,30 @@ cd personal-config-IA
 .\instalar.cmd            # o doble clic en instalar.cmd
 ```
 
-Para ver qué haría sin cambiar nada: `powershell -ExecutionPolicy Bypass -File .\instalar.ps1 -Simular`
+Al ejecutarlo, el instalador te preguntará para qué herramienta(s) deseas configurar este equipo:
+1. **Antigravity** (solo configura Google Antigravity; ideal si no tienes Claude instalado).
+2. **Claude Code** (solo configura Claude Code).
+3. **Ambos** (configura las dos herramientas en paralelo).
+
+Tu elección se guarda localmente en `.instalacion.json` (ignorado por git), por lo que las futuras sincronizaciones (`sincronizar.cmd` / `sincronizar.sh`) actualizarán únicamente lo que elegiste sin volver a preguntar.
+
+### Instalación directa sin preguntas (parámetros CLI)
+
+- **Windows:**
+  - Solo Antigravity: `.\instalar.cmd -Antigravity`
+  - Solo Claude Code: `.\instalar.cmd -Claude`
+  - Ambas herramientas: `.\instalar.cmd -Ambos`
+  - Simular sin cambios: `powershell -ExecutionPolicy Bypass -File .\instalar.ps1 -Simular`
+
+- **macOS / Linux:**
+  - Solo Antigravity: `./instalar.sh --antigravity`
+  - Solo Claude Code: `./instalar.sh --claude`
+  - Ambas herramientas: `./instalar.sh --ambos`
+  - Simular sin cambios: `./instalar.sh --simular`
 
 > [!note] Si el equipo ya tiene skills o agentes propios
 > El instalador los **incorpora al repo** (nunca sobrescribe lo que ya está en el repo) y te lo indica en «Para revisar». Haz `commit` + `push` para que queden en todos tus equipos.
-> Lo que choca de nombre queda en `~/.claude/skills.respaldo-<fecha>` (o similar) para que decidas.
-
-macOS / Linux: `./instalar.sh` (y `./instalar.sh --simular`).
+> Lo que choca de nombre queda en `~/.claude/skills.respaldo-<fecha>` o `~/.gemini/config/skills.respaldo-<fecha>` para que decidas.
 
 **Claude Code a mano** (si `claude` no estaba en el PATH al instalar), dentro de Claude Code:
 

@@ -13,6 +13,7 @@ desktop.ini
 *.local.md
 .credentials.json
 oauth_creds.json
+.instalacion.json
 
 # Dependencias
 node_modules/
